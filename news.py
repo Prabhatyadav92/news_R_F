@@ -1,30 +1,45 @@
-from flask import Flask, render_template, request
+import streamlit as st
 import joblib
 
-# Load GBC model and vectorizer
+# Load model and vectorizer
 GBC = joblib.load("GBC_model.pkl")
 vectorizer = joblib.load("vectorizer.pkl")
 
-app = Flask(__name__)
+# Page config
+st.set_page_config(
+    page_title="Fake News Detection",
+    page_icon="📰",
+    layout="centered"
+)
 
-@app.route("/")
-def home():
-    return render_template("index.html")
+# Title
+st.title("📰 Fake News Detection System")
+st.write("Enter a news article below to check whether it is **Real** or **Fake**.")
 
-@app.route("/predict", methods=["POST"])
-def predict():
-    text = request.form["news"]
+# Input text
+news_text = st.text_area(
+    "Paste the news text here:",
+    height=200,
+    placeholder="Type or paste news content..."
+)
 
-    # Vectorize input text
-    new_xv_test = vectorizer.transform([text])
+# Predict button
+if st.button("Predict"):
+    if news_text.strip() == "":
+        st.warning("⚠️ Please enter some news text.")
+    else:
+        # Vectorize input
+        transformed_text = vectorizer.transform([news_text])
 
-    # Model prediction
-    pred = GBC.predict(new_xv_test)[0]
+        # Prediction
+        prediction = GBC.predict(transformed_text)[0]
 
-    # Convert to readable label
-    result = "Fake News" if pred == 1 else "Real News"
+        # Output
+        if prediction == 1:
+            st.error("🚨 This news is **Fake**")
+        else:
+            st.success("✅ This news is **Real**")
 
-    return render_template("index.html", result=result, news=text)
-
-if __name__ == "__main__":
-    app.run(debug=True)
+# Footer
+st.markdown("---")
+st.markdown("**Developed by Prabhat Yadav**")
